@@ -92,7 +92,7 @@
       </div>
     </header>
 
-    <!-- Main Content Body (Extra bottom padding pb-28 ensures action buttons aren't blocked) -->
+    <!-- Main Content Body -->
     <main class="flex-1 overflow-y-auto p-4 pb-28">
 
       <!-- 1. DASHBOARD VIEW -->
@@ -467,11 +467,27 @@
             Save Settings
           </button>
         </div>
+
+        <!-- Data Backup & Restore Section -->
+        <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-700 space-y-3">
+          <h2 class="text-base font-bold text-gray-900 dark:text-white">Data Backup & Restore</h2>
+          <p class="text-xs text-gray-500 dark:text-gray-400">Export your invoices and clients to a file, or restore them on another device (like your phone).</p>
+          
+          <div class="flex gap-2 pt-1">
+            <button @click="exportBackup" class="flex-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-gray-800 dark:text-gray-200 font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2">
+              <i class="fa-solid fa-download"></i> Export Backup
+            </button>
+            <label class="flex-1 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 text-indigo-600 dark:text-indigo-300 font-semibold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 cursor-pointer border border-indigo-200 dark:border-indigo-800">
+              <i class="fa-solid fa-upload"></i> Import Backup
+              <input type="file" accept=".json" @change="importBackup" class="hidden">
+            </label>
+          </div>
+        </div>
       </div>
 
     </main>
 
-    <!-- Bottom Navigation Bar (Spread horizontally evenly, floating properly) -->
+    <!-- Bottom Navigation Bar -->
     <nav class="no-print fixed bottom-0 left-0 right-0 w-full max-w-md mx-auto md:max-w-4xl bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center px-2 py-2 z-30 shadow-2xl">
       <button @click="currentView = 'dashboard'" :class="currentView === 'dashboard' ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400'" class="flex-1 flex flex-col items-center justify-center gap-1 py-1">
         <i class="fa-solid fa-chart-pie text-lg"></i>
@@ -791,6 +807,46 @@
           showClientModal.value = false;
         };
 
+        // Backup & Restore Actions
+        const exportBackup = () => {
+          const backupData = {
+            invoices: invoices.value,
+            clients: clients.value,
+            catalogItems: catalogItems.value,
+            business: business.value,
+            currencySymbol: currencySymbol.value,
+            exportDate: new Date().toISOString()
+          };
+          const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
+          const downloadAnchor = document.createElement('a');
+          downloadAnchor.setAttribute("href", dataStr);
+          downloadAnchor.setAttribute("download", `invoice_backup_${new Date().toISOString().split('T')[0]}.json`);
+          document.body.appendChild(downloadAnchor);
+          downloadAnchor.click();
+          downloadAnchor.remove();
+        };
+
+        const importBackup = (event) => {
+          const file = event.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            try {
+              const imported = JSON.parse(e.target.result);
+              if (imported.invoices) invoices.value = imported.invoices;
+              if (imported.clients) clients.value = imported.clients;
+              if (imported.catalogItems) catalogItems.value = imported.catalogItems;
+              if (imported.business) business.value = imported.business;
+              if (imported.currencySymbol) currencySymbol.value = imported.currencySymbol;
+              saveToLocalStorage();
+              alert('Backup restored successfully!');
+            } catch (err) {
+              alert('Invalid backup file format.');
+            }
+          };
+          reader.readAsText(file);
+        };
+
         const exportPDF = () => {
           const element = document.getElementById('printable-area');
           if (typeof html2pdf !== 'undefined') {
@@ -888,6 +944,8 @@
           deleteCatalogItem,
           openClientModal,
           saveClient,
+          exportBackup,
+          importBackup,
           exportPDF,
           toggleDarkMode,
           statusBadgeClass,
