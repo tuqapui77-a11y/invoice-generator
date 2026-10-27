@@ -203,12 +203,7 @@
 
         <!-- Line Items -->
         <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-700 space-y-4">
-          <div class="flex justify-between items-center">
-            <h2 class="text-lg font-bold text-gray-900 dark:text-white">Items</h2>
-            <button @click="addItem" class="text-xs bg-indigo-50 dark:bg-gray-700 text-indigo-600 dark:text-indigo-300 font-semibold px-3 py-1.5 rounded-lg">
-              + Custom Item
-            </button>
-          </div>
+          <h2 class="text-lg font-bold text-gray-900 dark:text-white">Items</h2>
 
           <div v-for="(item, index) in activeInvoice.items" :key="index" class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl space-y-2 relative border border-gray-100 dark:border-gray-600">
             <button @click="removeItem(index)" class="absolute top-2 right-2 text-red-500 p-1">
@@ -246,6 +241,11 @@
               </div>
             </div>
           </div>
+
+          <!-- Add Item Button moved below the list -->
+          <button @click="addItem" class="w-full py-3 bg-indigo-50 hover:bg-indigo-100 dark:bg-gray-700 dark:hover:bg-gray-600 text-indigo-600 dark:text-indigo-300 font-semibold rounded-xl text-sm transition flex items-center justify-center gap-2 border border-dashed border-indigo-300 dark:border-indigo-800">
+            <i class="fa-solid fa-plus">+ Custom Item</i>
+          </button>
         </div>
 
         <!-- Taxes & Discounts -->
@@ -368,8 +368,36 @@
             </div>
           </div>
 
+          <!-- Payment Information Section -->
+          <div v-if="hasPaymentInfo" class="border-t border-gray-200 pt-4 bg-gray-50/70 p-4 rounded-xl space-y-2">
+            <div class="font-bold text-gray-700 uppercase text-[10px] tracking-wider flex items-center gap-1.5">
+              <i class="fa-solid fa-credit-card text-indigo-600"></i> Payment Details
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+              <div class="space-y-1">
+                <div v-if="business.bankName"><span class="font-semibold text-gray-600">Bank Name:</span> {{ business.bankName }}</div>
+                <div v-if="business.accountName"><span class="font-semibold text-gray-600">Account Name:</span> {{ business.accountName }}</div>
+                <div v-if="business.accountNumber"><span class="font-semibold text-gray-600">Account No:</span> <span class="font-mono font-bold">{{ business.accountNumber }}</span></div>
+                <div v-if="business.duitnowId"><span class="font-semibold text-gray-600">DuitNow ID:</span> <span class="font-mono font-bold">{{ business.duitnowId }}</span></div>
+              </div>
+
+              <div v-if="business.paymentLink || business.qrCodeUrl" class="space-y-2 flex flex-col justify-center">
+                <div v-if="business.paymentLink">
+                  <a :href="business.paymentLink" target="_blank" class="inline-flex items-center gap-1.5 bg-indigo-600 text-white px-3 py-1.5 rounded-lg font-semibold text-xs hover:bg-indigo-700 transition">
+                    <i class="fa-solid fa-link"></i> Pay Online / Touch 'n Go
+                  </a>
+                </div>
+                <div v-if="business.qrCodeUrl" class="flex items-center gap-2">
+                  <img :src="business.qrCodeUrl" alt="Payment QR Code" class="w-20 h-20 object-contain border rounded-lg bg-white p-1">
+                  <span class="text-[10px] text-gray-500">Scan QR Code to pay via DuitNow or eWallet</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Notes / Terms -->
-          <div class="border-t border-gray-100 pt-4 text-[10px] text-gray-400 space-y-1">
+          <div class="border-t border-gray-100 pt-3 text-[10px] text-gray-400 space-y-1">
             <div class="font-bold text-gray-500 uppercase">Payment Terms & Notes</div>
             <p>{{ business.notes || 'Thank you for your business! Please remit payment within the due date.' }}</p>
           </div>
@@ -462,6 +490,43 @@
             <label class="block text-xs font-semibold text-gray-500 mb-1">Default Currency Symbol</label>
             <input v-model="currencySymbol" type="text" class="w-20 bg-gray-50 dark:bg-gray-700 p-2.5 rounded-xl border border-gray-200 dark:border-gray-600 text-sm text-center font-bold">
           </div>
+        </div>
+
+        <!-- Payment Info Settings -->
+        <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-700 space-y-3">
+          <h2 class="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            <i class="fa-solid fa-wallet text-indigo-600"></i> Payment & Banking Links
+          </h2>
+          
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1">Bank Name (e.g. Maybank, Public Bank)</label>
+            <input v-model="business.bankName" type="text" placeholder="e.g. Maybank" class="w-full bg-gray-50 dark:bg-gray-700 p-2.5 rounded-xl border border-gray-200 dark:border-gray-600 text-sm">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1">Account Holder Name</label>
+            <input v-model="business.accountName" type="text" placeholder="Account Name" class="w-full bg-gray-50 dark:bg-gray-700 p-2.5 rounded-xl border border-gray-200 dark:border-gray-600 text-sm">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1">Bank Account Number</label>
+            <input v-model="business.accountNumber" type="text" placeholder="Account Number" class="w-full bg-gray-50 dark:bg-gray-700 p-2.5 rounded-xl border border-gray-200 dark:border-gray-600 text-sm">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1">DuitNow Proxy ID (Phone / IC / SSM)</label>
+            <input v-model="business.duitnowId" type="text" placeholder="e.g. 0123456789" class="w-full bg-gray-50 dark:bg-gray-700 p-2.5 rounded-xl border border-gray-200 dark:border-gray-600 text-sm">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1">Online Payment Link (e.g. Touch 'n Go Static Link)</label>
+            <input v-model="business.paymentLink" type="url" placeholder="https://..." class="w-full bg-gray-50 dark:bg-gray-700 p-2.5 rounded-xl border border-gray-200 dark:border-gray-600 text-sm">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1">DuitNow QR Code Image URL</label>
+            <input v-model="business.qrCodeUrl" type="url" placeholder="Image URL for QR Code" class="w-full bg-gray-50 dark:bg-gray-700 p-2.5 rounded-xl border border-gray-200 dark:border-gray-600 text-sm">
+          </div>
 
           <button @click="saveSettings" class="w-full bg-indigo-600 text-white font-bold py-2.5 rounded-xl shadow mt-2">
             Save Settings
@@ -528,7 +593,7 @@
         <div class="space-y-3">
           <div>
             <label class="text-xs font-semibold text-gray-500 mb-1 block">Description</label>
-            <input v-model="modalCatalogItem.description" placeholder="e.g. Website Maintenance" class="w-full bg-gray-50 dark:bg-gray-700 p-2.5 rounded-xl border border-gray-200 dark:border-gray-600 text-sm">
+            <input v-model="modalCatalogItem.description" placeholder="e.g. Canteen Lunch Set" class="w-full bg-gray-50 dark:bg-gray-700 p-2.5 rounded-xl border border-gray-200 dark:border-gray-600 text-sm">
           </div>
           <div>
             <label class="text-xs font-semibold text-gray-500 mb-1 block">Default Price</label>
@@ -596,42 +661,50 @@
 
         // Business Info
         const business = ref({
-          name: 'Acme Digital Inc.',
-          email: 'billing@acmedigital.com',
-          phone: '+1 (555) 019-2834',
-          address: '100 Innovation Way, Suite 400\nSan Francisco, CA 94105',
-          notes: 'Payment is due within 15 days of invoice date.'
+          name: 'Kantin Sekolah Food Service',
+          email: 'canteen@school.edu.my',
+          phone: '+60 12-345 6789',
+          address: 'Sekolah Jenis Kebangsaan (Cina)\nJohor Bahru, Johor, Malaysia',
+          notes: 'Payment is due within 14 days of invoice date.',
+          bankName: '',
+          accountName: '',
+          accountNumber: '',
+          duitnowId: '',
+          paymentLink: '',
+          qrCodeUrl: ''
+        });
+
+        const hasPaymentInfo = computed(() => {
+          return !!(business.value.bankName || business.value.accountNumber || business.value.duitnowId || business.value.paymentLink || business.value.qrCodeUrl);
         });
 
         // Catalog Items
         const catalogItems = ref([
-          { id: 'cat_1', description: 'Mobile App UI/UX Design', price: 1200.00 },
-          { id: 'cat_2', description: 'Frontend Development (Vue 3)', price: 85.00 },
-          { id: 'cat_3', description: 'Monthly Maintenance', price: 200.00 }
+          { id: 'cat_1', description: 'Student Lunch Set', price: 6.00 },
+          { id: 'cat_2', description: 'Teacher Meal Tray', price: 8.50 }
         ]);
 
         // Clients
         const clients = ref([
-          { id: 'c1', name: 'vo thi hong hoa', email: 'vothihonghoa@gmail.com', phone: '+84 90 123 4567', address: 'Ho Chi Minh City, Vietnam' }
+          { id: 'c1', name: 'SJK(C) Thorburn', email: 'admin@thorburn.edu.my', phone: '+60 7-123 4567', address: 'Johor Bahru, Johor' }
         ]);
 
         // Invoices
         const invoices = ref([
           {
             id: 'inv_101',
-            number: 'INV-1001',
+            number: 'INV-1004',
             status: 'pending',
             issueDate: new Date().toISOString().split('T')[0],
             dueDate: new Date(Date.now() + 14*24*60*60*1000).toISOString().split('T')[0],
             clientId: 'c1',
-            clientName: 'vo thi hong hoa',
-            clientEmail: 'vothihonghoa@gmail.com',
-            clientAddress: 'Ho Chi Minh City, Vietnam',
-            taxRate: 8.5,
+            clientName: 'SJK(C) Thorburn',
+            clientEmail: 'admin@thorburn.edu.my',
+            clientAddress: 'Johor Bahru, Johor',
+            taxRate: 0,
             discountRate: 0,
             items: [
-              { description: 'Mobile App UI/UX Design', quantity: 1, price: 1200.00 },
-              { description: 'Frontend Development (Vue 3)', quantity: 10, price: 85.00 }
+              { description: 'Student Lunch Set', quantity: 50, price: 6.00 }
             ]
           }
         ]);
@@ -920,6 +993,7 @@
           filterStatus,
           currencySymbol,
           business,
+          hasPaymentInfo,
           catalogItems,
           clients,
           invoices,
